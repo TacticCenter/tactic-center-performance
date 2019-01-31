@@ -49,17 +49,78 @@ add_filter('json_enabled', '__return_false');
 add_filter('json_jsonp_enabled', '__return_false');
 
 
+/**
+ * Funciones de Heartbeat.
+ *
+ */
 
+// Deshabilita completamente la funcionalidad de heartbeat.
+add_action( 'init', 'apaga_heartbeat', 1 );
+function apaga_heartbeat() {
+	wp_deregister_script('heartbeat');
+}
 
-
-
-// Desactiva la llamada automática de fuentes de Google.
-add_filter( 'style_loader_src', function($href){
-	if(strpos($href, "//fonts.googleapis.com/") === false) {
-		return $href;
+// Deshabilita heartbeat en homepage solamente.
+add_action( 'init', 'apaga_heartbeat_home', 1 );
+function apaga_heartbeat_home() {
+	global $pagenow;
+	if ( $pagenow == 'index.php' ){
+		wp_deregister_script( 'heartbeat' );
 	}
-		return false;
-});
+}
+
+// Deshabilita heartbeat en posts y páginas solamente.
+add_action( 'init', 'apaga_heartbeat_posts', 1 );
+function apaga_heartbeat_posts() {
+	global $pagenow;
+	if ( $pagenow != 'post.php' && $pagenow != 'post-new.php' ){
+		wp_deregister_script('heartbeat');
+	}
+}
+
+// Modifica la frecuencia del heartbeat.
+$heartbeat_location = get_option('heartbeat_location');
+$heartbeat_frequency = get_option('heartbeat_frequency');
+
+if ( is_numeric( $heartbeat_frequency ) ) {
+	function heartbeat_frequency( $settings ) {
+		global $heartbeat_frequency;
+
+		// Modificar por la cantidad en segundos deseada.
+		$settings['60'] = $heartbeat_frequency;
+
+		return $settings;
+	}
+	add_filter( 'heartbeat_settings', 'heartbeat_frequency' );
+}
+
+
+
+/**
+ * Desactiva todos los widgets que trae consigo WP por defecto.
+ * Comentar los que no se desean desactivar.
+ */
+function remove_wp_widgets() {
+	unregister_widget('WP_Widget_Pages');
+	unregister_widget('WP_Widget_Calendar');
+	unregister_widget('WP_Widget_Archives');
+	unregister_widget('WP_Widget_Links');
+	unregister_widget('WP_Widget_Media_Audio');
+	unregister_widget('WP_Widget_Media_Image');
+	unregister_widget('WP_Widget_Media_Video');
+	unregister_widget('WP_Widget_Media_Gallery');
+	unregister_widget('WP_Widget_Meta');
+	unregister_widget('WP_Widget_Search');
+	unregister_widget('WP_Widget_Text');
+	unregister_widget('WP_Widget_Categories');
+	unregister_widget('WP_Widget_Recent_Posts');
+	unregister_widget('WP_Widget_Recent_Comments');
+	unregister_widget('WP_Widget_RSS');
+	unregister_widget('WP_Widget_Tag_Cloud');
+	unregister_widget('WP_Nav_Menu_Widget');
+	unregister_widget('WP_Widget_Custom_HTML');
+}
+add_action( 'widgets_init', 'remove_wp_widgets');
 
 
 // Deshabilita los feeds de RSS.
@@ -73,6 +134,19 @@ add_action('do_feed_rss2', 'wp_disable_feeds', 1);
 add_action('do_feed_atom', 'wp_disable_feeds', 1);
 add_action('do_feed_rss2_comments', 'wp_disable_feeds', 1);
 add_action('do_feed_atom_comments', 'wp_disable_feeds', 1);
+
+
+
+// Desactiva la llamada automática de fuentes de Google.
+add_filter( 'style_loader_src', function($href){
+	if(strpos($href, "//fonts.googleapis.com/") === false) {
+		return $href;
+	}
+		return false;
+});
+
+
+
 
 
 
@@ -223,68 +297,12 @@ add_filter('comments_array', 'df_disable_comments_hide_existing_comments', 10, 2
 
 
 
-function remove_wp_widgets() {
-	unregister_widget('WP_Widget_Pages');
-	unregister_widget('WP_Widget_Calendar');
-	unregister_widget('WP_Widget_Archives');
-	unregister_widget('WP_Widget_Links');
-	unregister_widget('WP_Widget_Media_Audio');
-	unregister_widget('WP_Widget_Media_Image');
-	unregister_widget('WP_Widget_Media_Video');
-	unregister_widget('WP_Widget_Media_Gallery');
-	unregister_widget('WP_Widget_Meta');
-	unregister_widget('WP_Widget_Search');
-	unregister_widget('WP_Widget_Text');
-	unregister_widget('WP_Widget_Categories');
-	unregister_widget('WP_Widget_Recent_Posts');
-	unregister_widget('WP_Widget_Recent_Comments');
-	unregister_widget('WP_Widget_RSS');
-	unregister_widget('WP_Widget_Tag_Cloud');
-	unregister_widget('WP_Nav_Menu_Widget');
-	unregister_widget('WP_Widget_Custom_HTML');
-}
-add_action( 'widgets_init', 'remove_wp_widgets');
 
 
 
 
-add_action( 'init', 'stop_heartbeat', 1 );
-function stop_heartbeat() {
-wp_deregister_script('heartbeat');
-}
 
 
-
-
-add_action( 'init', 'stop_heartbeat_home', 1 );
-function stop_heartbeat_home() {
-global $pagenow;
-if ( $pagenow == 'index.php' )
-wp_deregister_script('heartbeat');
-}
-
-
-add_action( 'init', 'stop_heartbeat_posts', 1 );
-function stop_heartbeat_posts() {
-global $pagenow;
-if ( $pagenow != 'post.php' && $pagenow != 'post-new.php' )
-wp_deregister_script('heartbeat');
-}
-
-
-
-$heartbeat_location = get_option('heartbeat_location');
-$heartbeat_frequency = get_option('heartbeat_frequency');
-
-if ( is_numeric( $heartbeat_frequency ) ) {
-function heartbeat_frequency( $settings ) {
-global $heartbeat_frequency;
-$settings['60'] = $heartbeat_frequency;
-return $settings;
-}
-
-add_filter( 'heartbeat_settings', 'heartbeat_frequency' );
-}
 
 
 
