@@ -12,20 +12,60 @@ defined( 'ABSPATH' ) || exit;
 $url = plugin_dir_url( __FILE__ );
 
 
+/**
+ * Funciones de REST API
+ *
+ */
 
-add_filter( 'style_loader_src', function($href){
-if(strpos($href, "//fonts.googleapis.com/") === false) {
-return $href;
+// Deshabilita el sistema de REST API completamente.
+// Utilizar con precaución pues aLgunos plugins pueden depender de esta funcionalidad.
+add_filter( 'rest_authentication_errors', 'deshabilitar_rest_api' );
+function deshabilitar_rest_api( $access ) {
+	return new WP_Error( 'rest_disabled', 'El REST API en este sitio ha sido deshabilitado', array( 'status' => rest_authorization_required_code() ) );
 }
-return false;
+
+// Inhabilita el acceso al REST API si no es un usuario conectado.
+add_filter( 'rest_authentication_errors', function( $result ) {
+	if ( ! empty( $result ) ) {
+		return $result;
+	}
+	if ( ! is_user_logged_in() ) {
+		return new WP_Error( 'rest_not_logged_in', 'No está conectado.', array( 'status' => 401 ) );
+	}
+	return $result;
+});
+
+// Deshabilita el enlace de REST API en el head.
+remove_action('wp_head', 'rest_output_link_wp_head', 10);
+
+// Deshabilita enlaces de oEmbeds en el head.
+remove_action('wp_head', 'wp_oembed_add_discovery_links', 10);
+
+// Deshabilita el enlace a REST API en los HTTP headers.
+remove_action('template_redirect', 'rest_output_link_header', 11, 0);
+
+// Deshabilita la carga de JSON del REST API.
+add_filter('json_enabled', '__return_false');
+add_filter('json_jsonp_enabled', '__return_false');
+
+
+
+
+
+
+// Desactiva la llamada automática de fuentes de Google.
+add_filter( 'style_loader_src', function($href){
+	if(strpos($href, "//fonts.googleapis.com/") === false) {
+		return $href;
+	}
+		return false;
 });
 
 
-// Disables RSS feeds.
+// Deshabilita los feeds de RSS.
 function wp_disable_feeds() {
-wp_die( __('No feeds available!') );
+	wp_die( 'No existe RSS' );
 }
-
 add_action('do_feed', 'wp_disable_feeds', 1);
 add_action('do_feed_rdf', 'wp_disable_feeds', 1);
 add_action('do_feed_rss', 'wp_disable_feeds', 1);
@@ -34,47 +74,27 @@ add_action('do_feed_atom', 'wp_disable_feeds', 1);
 add_action('do_feed_rss2_comments', 'wp_disable_feeds', 1);
 add_action('do_feed_atom_comments', 'wp_disable_feeds', 1);
 
-// Disable REST API link tag
-remove_action('wp_head', 'rest_output_link_wp_head', 10);
-
-// Disable oEmbed Discovery Links
-remove_action('wp_head', 'wp_oembed_add_discovery_links', 10);
-
-// Disable REST API link in HTTP headers
-remove_action('template_redirect', 'rest_output_link_header', 11, 0);
 
 
-add_filter('json_enabled', '__return_false');
-add_filter('json_jsonp_enabled', '__return_false');
-
+// Deshabilita el enlace  a RSD.
 remove_action ('wp_head', 'rsd_link');
+
+// Deshabilita el enlace de wlw.
 remove_action( 'wp_head', 'wlwmanifest_link');
 
+// Deshabilita los 'shortlinks'.
 remove_action( 'wp_head', 'wp_shortlink_wp_head');
 
 
 
 
 
-add_filter( 'rest_authentication_errors', 'ultimatewoo_disable_rest_api' );
-function ultimatewoo_disable_rest_api( $access ) {
-	return new WP_Error( 'rest_disabled', __( 'The REST API on this site has been disabled.' ), array( 'status' => rest_authorization_required_code() ) );
-}
 
 
 
 
 
 
-add_filter( 'rest_authentication_errors', function( $result ) {
-    if ( ! empty( $result ) ) {
-        return $result;
-    }
-    if ( ! is_user_logged_in() ) {
-        return new WP_Error( 'rest_not_logged_in', 'You are not currently logged in.', array( 'status' => 401 ) );
-    }
-    return $result;
-});
 
 
 /**
